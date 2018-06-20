@@ -1,0 +1,110 @@
+import sqlite3
+import os
+from user import User
+import base64
+from day import Day
+
+def get_db_connection():
+	return sqlite3.connect("next_level.db")
+
+def create_db():
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = ""
+	with open('schema.sql', 'r') as f:
+		q = f.read()
+		f.close()
+	cursor.execute("PRAGMA foreign_keys = ON")
+	cursor.executescript(q)
+	#insert domain values
+	rating_scales = {1:"EXCELLENT" , 2 : "VERY GOOD" , 3 : "GOOD" , 4 : "FAIR" , 5 : "POOR" }
+	for value , text in  rating_scales.items():
+		q = '''INSERT INTO rating_scales (text,value) VALUES (?,?);'''
+		cursor.execute(q, (text,value))
+	db_connection.commit()
+	db_connection.close()
+
+def insert_new_user(user):
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = ''' INSERT INTO user (name,email,password) VALUES (?,?,?);'''
+	cursor.execute(q,(user.name,user.email,base64.b64encode(user.password.encode('ascii'))))
+	db_connection.commit()
+	db_connection.close()
+	return cursor.lastrowid
+
+def get_user_info():
+	if  os.path.isfile("next_level.db"):
+		db_connection = get_db_connection()
+		cursor = db_connection.cursor()
+		q = ''' SELECT * FROM user'''
+		user = cursor.execute(q).fetchone()
+		user = User(user[1],user[2],base64.b64decode(user[3]),user[0])
+		return user
+	else:
+		 return None;
+
+def insert_day(day):
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = ''' INSERT INTO day (user_id, date, total, completed, social, health, overall, note)
+	VALUES (?,?,?,?,?,?,?,?) '''
+	cursor.execute(q,(day.user_id,day.date,day.total_tasks,day.completed,day.social_flag,
+	day.health_flag,day.overall_flag,day.note))
+	db_connection.commit()
+	db_connection.close()
+	return cursor.lastrowid
+
+def update_user(user):
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = "UPDATE user SET name=? , email=?, password=? WHERE id=?"
+	cursor.execute(q,(user.name,user.email,base64.b64encode(user.password.encode('ascii')),user.id))
+	db_connection.commit()
+	db_connection.close()
+
+def update_day(day):
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = "UPDATE day SET total=?, completed=?, social=?, health=?, overall=?, note=? WHERE id=?"
+	cursor.execute(q,(day.total_tasks, day.completed, day.social_flag, day.health_flag, day.overall_flag, day.note,day.id ))
+	db_connection.commit()
+	db_connection.close()
+
+def get_day(date):
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = ''' SELECT * FROM day WHERE substr(date, 1, 10) = ? '''
+	result = cursor.execute(q,(date,)).fetchone()
+	if result != None:
+		if len(result) > 8:
+			day = Day(result[1],result[2],result[3],result[4],result[5],result[6],result[7],result[8],result[0])
+		else:
+			day = Day(result[1],result[2],result[3],result[4],result[5],result[6],result[7],None,result[0])
+		return day
+	else:
+		return None
+
+def get_month_days(month,year):
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = '''SELECT * FROM day WHERE date BETWEEN \'%d-%02d-01\'  AND \'%d-%02d-31\''''%(year,month,year,month)
+	cursor.execute(q)
+	days = cursor.fetchall()
+	days_list = []
+	for day in days:
+		d = Day(day[1],day[2],day[3],day[4],day[5],day[6],day[7],day[8],day[0])
+		days_list.append(d)
+	return days_list
+
+def get_all_days():
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = '''SELECT * FROM day ORDER BY date ASC '''
+	cursor.execute(q)
+	days = cursor.fetchall()
+	days_list = []
+	for day in days:
+		d = Day(day[1],day[2],day[3],day[4],day[5],day[6],day[7],day[8],day[0])
+		days_list.append(d)
+	return days_list
