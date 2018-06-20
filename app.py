@@ -273,6 +273,6 @@ WELCOME INTO YOUR NEXT LEVEL!
 		elif utilities_var == 5  : export_pdf_all(user.name)
 		elif utilities_var == 6  : print_performance()
 
-	print(Fore.MAGENTA + Style.BRIGHT + "\n************************")
+	print(Fore.MAGENTA + Style.BRIGHT + "\n*************************************")
 	print(" Have a Nice Day %s!" % user.name )
-	print("************************\n"+ Style.RESET_ALL)
+	print("*************************************\n"+ Style.RESET_ALL)

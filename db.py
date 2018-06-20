@@ -39,10 +39,15 @@ def get_user_info():
 		cursor = db_connection.cursor()
 		q = ''' SELECT * FROM user'''
 		user = cursor.execute(q).fetchone()
-		user = User(user[1],user[2],base64.b64decode(user[3]),user[0])
-		return user
-	else:
+		if user != None:
+			user = User(user[1],user[2],base64.b64decode(user[3]),user[0])
+			db_connection.close()
+			return user
+		else:
+		 db_connection.close()
 		 return None;
+	else:
+		return None;
 
 def insert_day(day):
 	db_connection = get_db_connection()
@@ -81,8 +86,10 @@ def get_day(date):
 			day = Day(result[1],result[2],result[3],result[4],result[5],result[6],result[7],result[8],result[0])
 		else:
 			day = Day(result[1],result[2],result[3],result[4],result[5],result[6],result[7],None,result[0])
+		db_connection.close()
 		return day
 	else:
+		db_connection.close()
 		return None
 
 def get_month_days(month,year):
@@ -95,6 +102,7 @@ def get_month_days(month,year):
 	for day in days:
 		d = Day(day[1],day[2],day[3],day[4],day[5],day[6],day[7],day[8],day[0])
 		days_list.append(d)
+	db_connection.close()
 	return days_list
 
 def get_all_days():
@@ -107,4 +115,13 @@ def get_all_days():
 	for day in days:
 		d = Day(day[1],day[2],day[3],day[4],day[5],day[6],day[7],day[8],day[0])
 		days_list.append(d)
+	db_connection.close()
 	return days_list
+
+def insert_report(user,y,m,hasSent):
+	db_connection = get_db_connection()
+	cursor = db_connection.cursor()
+	q = ''' INSERT INTO report (user_id,month,year,hasSent,email) VALUES (?,?,?,?,?);'''
+	cursor.execute(q,(user.id,m,y,hasSent,user.email))
+	db_connection.commit()
+	db_connection.close()

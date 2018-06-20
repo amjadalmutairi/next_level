@@ -22,14 +22,14 @@ def scheduler_job():
     path = os.path.join(os.path.expanduser("~"), "Desktop/", date + ".pdf")
     title = "%s - %d Performance Report for %s" % (calendar.month_abbr[month],year,user.name)
     generate_pdf(path,title,days)
-    send_email(path,date,user.name)
+    hasSent = send_email(path,date,user)
+    db.insert_report(user,year,month,hasSent)
     os.remove(path)
 
-# Replace the email and passwords
-def send_email(path,date,user_name):
-    sender = 'YOUR EMAIL ADDRESS'
-    gmail_password = 'YOUR PASSWORD'
-    recipients = ['YOUR EMAIL ADDRESS']
+def send_email(path,date,user):
+    sender = user.email
+    gmail_password = user.password.decode('utf-8')
+    recipients = [user.email]
 
     # Create the enclosing (outer) message
     outer = MIMEMultipart()
@@ -50,10 +50,9 @@ def send_email(path,date,user_name):
             encoders.encode_base64(msg)
             msg.add_header('Content-Disposition', 'attachment', filename=os.path.basename(file))
             outer.attach(msg)
-            outer.attach(MIMEText("Hi %s, \nPlease find attached your monthly report!\nHave a nice day <3." %user_name, 'plain'))
+            outer.attach(MIMEText("Hi %s, \nPlease find attached your monthly report!\nHave a nice day <3." %user.name, 'plain'))
         except:
-            print("Unable to open one of the attachments. Error: ", sys.exc_info()[0])
-            raise
+            return False
         composed = outer.as_string()
 
     # Send the email
@@ -65,10 +64,9 @@ def send_email(path,date,user_name):
             s.login(sender, gmail_password)
             s.sendmail(sender, recipients, composed)
             s.close()
-        print("Email sent!")
+        return True
     except:
-        print("Unable to send the email. Error: ", sys.exc_info()[0])
-        raise
+        return False
 
 scheduler.add_job(scheduler_job,'cron', day='last', hour='9')
 
