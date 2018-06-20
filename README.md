@@ -25,9 +25,10 @@ Then, the script will send you a monthly report for your performance at the end 
 Then, at the end of each day you should run the app.py script and enter your numbers.
 
 ### Terminal Screenshot for the 1st run
+![Screenshot](1st.png)
 
 ### Terminal Screenshot for the further run
-
+![Screenshot](2nd.png)
 
 ### Important Notes
 - Your email address should be **gmail**.
