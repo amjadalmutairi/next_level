@@ -2,8 +2,9 @@ DROP TABLE IF EXISTS user;
 CREATE TABLE user (
 id INTEGER PRIMARY KEY,
 name TEXT NOT NULL,
-email TEXT NOT NULL UNIQUE,
-password TEXT NOT NULL
+email TEXT UNIQUE,
+password TEXT,
+receive_email INTEGER NOT NULL /* 1 true */
 );
 
 DROP TABLE IF EXISTS day;
@@ -25,9 +26,9 @@ CREATE TABLE report(
 id INTEGER PRIMARY KEY,
 user_id INTEGER NOT NULL,
 month INTEGER NOT NULL,
-hasSent INTEGER NOT NULL, /* 1 true */
+has_sent INTEGER NOT NULL, /* 1 true */
 year INTEGER NOT NULL,
-email TEXT NOT NULL,
+email TEXT,
 FOREIGN KEY (email) REFERENCES user(email),
 FOREIGN KEY (user_id) REFERENCES user(id)
 );

@@ -13,6 +13,55 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle,Paragraph,Sp
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.pagesizes import letter, inch
 import os
+import smtplib
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+
+def send_email(path,date,user):
+    COMMASPACE = ', '
+    sender = user.email
+    gmail_password = user.password.decode('utf-8')
+    recipients = [user.email]
+
+    # Create the enclosing (outer) message
+    outer = MIMEMultipart()
+    outer['Subject'] = '%s Performance Report' % date
+    outer['To'] = COMMASPACE.join(recipients)
+    outer['From'] = sender
+    outer.preamble = 'You will not see this in a MIME-aware mail reader.\n'
+
+    # List of attachments
+    attachments = [path]
+     # Add the attachments to the message
+    for file in attachments:
+        try:
+            with open(file, 'rb') as fp:
+                msg = MIMEBase('application', "octet-stream")
+                msg.set_payload(fp.read())
+
+            encoders.encode_base64(msg)
+            msg.add_header('Content-Disposition', 'attachment', filename=os.path.basename(file))
+            outer.attach(msg)
+            outer.attach(MIMEText("Hi %s, \nPlease find attached your monthly report!\nHave a nice day <3." %user.name, 'plain'))
+        except:
+            return False
+        composed = outer.as_string()
+
+    # Send the email
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as s:
+            s.ehlo()
+            s.starttls()
+            s.ehlo()
+            s.login(sender, gmail_password)
+            s.sendmail(sender, recipients, composed)
+            s.close()
+        return True
+    except:
+        return False
 
 def read_positive_number(msg,less_than=sys.maxsize):
 	value = input(Fore.BLUE + msg + Style.RESET_ALL)
@@ -52,24 +101,34 @@ WELCOME INTO YOUR NEXT LEVEL!
 
 def read_configration():
 	name = input( Fore.YELLOW + Style.BRIGHT + "* Your full name: " +  Style.RESET_ALL)
-	email = input(Fore.YELLOW + Style.BRIGHT + "* Your email (Should be gmail): " +  Style.RESET_ALL)
-	is_valid = validate_email(email.lower()) and "gmail.com" in email.lower()
-	while((not is_valid) or ( "gmail.com" not in email.lower())):
-		print(Fore.RED + "\n>> WRONG EMAIL ADDRESS . ." + Style.RESET_ALL)
+	receive_email = input( Fore.YELLOW + Style.BRIGHT + "* Do you want to recvie your performance reports via your email? Y/N " +  Style.RESET_ALL)
+	email = None
+	password = None
+	while(receive_email != 'Y' and receive_email != 'y' and receive_email != 'N' and receive_email != 'n' ):
+			print(Fore.RED + "\n>> WRONG INPUT . ." + Style.RESET_ALL)
+			receive_email = input( Fore.YELLOW + Style.BRIGHT + "* Do you want to recvie your performance reports via your email? Y/N " +  Style.RESET_ALL)
+	if(receive_email == 'Y' or receive_email == 'y'):
+		receive_email= 1
 		email = input(Fore.YELLOW + Style.BRIGHT + "* Your email (Should be gmail): " +  Style.RESET_ALL)
 		is_valid = validate_email(email.lower()) and "gmail.com" in email.lower()
-	password = input( Fore.YELLOW + Style.BRIGHT + "* Your email password: " +  Style.RESET_ALL)
-	while password == "":
-		print(Fore.RED + "\n>> PASSWORD CAN NOT BE EMPTY . ." + Style.RESET_ALL)
+		while((not is_valid) or ( "gmail.com" not in email.lower())):
+			print(Fore.RED + "\n>> WRONG EMAIL ADDRESS . ." + Style.RESET_ALL)
+			email = input(Fore.YELLOW + Style.BRIGHT + "* Your email (Should be gmail): " +  Style.RESET_ALL)
+			is_valid = validate_email(email.lower()) and "gmail.com" in email.lower()
 		password = input( Fore.YELLOW + Style.BRIGHT + "* Your email password: " +  Style.RESET_ALL)
-	user = User(name,email.lower(),password)
+		while password == "":
+			print(Fore.RED + "\n>> PASSWORD CAN NOT BE EMPTY . ." + Style.RESET_ALL)
+			password = input( Fore.YELLOW + Style.BRIGHT + "* Your email password: " +  Style.RESET_ALL)
+		user = User(name,email.lower(),password,1)
+	else:
+		user = User(name,email,password,0)
 	return user
 
 def read_day_input(date):
-	total = read_positive_number("Enter tasks total number of your todo list: ")
+	total = read_positive_number("Enter total number of the tasks in your todo list: ")
 	completed = read_positive_number("Out of %d, how many did you complete? " % total , total)
-	social = read_rating_value("How much do you rate your socila activity today?\n")
-	health = read_rating_value("How much do you rate your health today?\n")
+	social = read_rating_value("How satisfied are you with your social activities today?\n")
+	health = read_rating_value("How satisfied are you with your health activities today?\n")
 	overall = read_rating_value("Your overall rate for your day?\n")
 	note = input(Fore.BLUE + "Any final note? (press enter directly if you have nothing) " + Style.RESET_ALL)
 	day = Day(user.id,date,total,completed,social,health,overall,note)
@@ -104,7 +163,7 @@ def generate_pdf(path,title_para,days):
 	table_data = [["Day","Date","Total","Completed","Ratio"
 		,"Social","Health", "Overall"]]
 	note_data = [["Day" , "Date" , "Notes"]]
-	result_data = [["AVG Tasks" , "AVG Social" , "ANG Health" , "AVG Overall","Total Days"]]
+	result_data = [["AVG Tasks" , "AVG Social" , "AVG Health" , "AVG Overall","Total Days"]]
 	tasks_total = 0
 	social_total = 0
 	health_total = 0
@@ -113,12 +172,12 @@ def generate_pdf(path,title_para,days):
 		date = datetime.datetime.strptime(day.date[0:10] , '%Y-%m-%d')
 		table_data.append(
 			[calendar.day_name[date.weekday()],
-			day.date[1:10],
+			day.date[0:10],
 			day.total_tasks,day.completed,day.get_tasks_ratio(),
 			rating_scale(day.social_flag).name.replace("_" , " "),
 			rating_scale(day.health_flag).name.replace("_" , " "),
 			rating_scale(day.overall_flag).name.replace("_" , " ")])
-		note_data.append([calendar.day_name[date.weekday()],day.date[1:10], day.note])
+		note_data.append([calendar.day_name[date.weekday()],day.date[0:10], day.note])
 		tasks_total += day.get_tasks_ratio()
 		social_total += day.social_flag
 		health_total += day.health_flag
@@ -169,6 +228,7 @@ def generate_pdf(path,title_para,days):
 	c.build(elements)
 
 def export_pdf_month(user_name):
+	reports_folder_path = os.path.join(os.path.expanduser("~"), "Desktop/", "next_level_reports")
 	print(Fore.MAGENTA + "\n======= Export Month =======")
 	month = read_positive_number("Enter month: " , 12)
 	year = read_positive_number("Enter year: " , datetime.datetime.now().year)
@@ -177,7 +237,7 @@ def export_pdf_month(user_name):
 	if len(days) == 0:
 		print(Fore.WHITE + Back.RED + "\nThere is no stored data for " + date + "!" + Style.RESET_ALL + "\n" )
 	else:
-		path = os.path.join(os.path.expanduser("~"), "Desktop/", date + ".pdf")
+		path = reports_folder_path + "/" +  date + ".pdf"
 		title = "%s - %d Performance Report for %s" % (calendar.month_abbr[month],year,user_name)
 		generate_pdf(path,title,days)
 		print("\n" + Back.BLUE + Fore.WHITE + " The requested report has been generated! Check out your desktop (•̀ᴗ•́)   " + Style.RESET_ALL )
@@ -206,12 +266,13 @@ def print_performance():
 		print(Fore.CYAN + "Number of days: " + Fore.LIGHTBLUE_EX +str(counter) + Style.RESET_ALL + "\n")
 
 def export_pdf_all(user_name):
+	reports_folder_path = os.path.join(os.path.expanduser("~"), "Desktop/", "next_level_reports")
 	print(Fore.MAGENTA + "\n======= Export All =======")
 	days = db.get_all_days()
 	if len(days) == 0:
 		print(Fore.WHITE + Back.RED + "\nThere is no stored data!" + Style.RESET_ALL + "\n" )
 	else:
-		path = os.path.join(os.path.expanduser("~"), "Desktop/", "next_level_data.pdf")
+		path = reports_folder_path + "/" +   "next_level_data.pdf"
 		title = "Performance Report for %s" % user_name
 		generate_pdf(path,title,days)
 		print("\n" + Back.BLUE + Fore.WHITE + " The requested report has been generated! Check out your desktop (•̀ᴗ•́)   " + Style.RESET_ALL )
@@ -229,7 +290,11 @@ def view_day():
 		print(Fore.WHITE + Back.RED + "\nThere is no stored data for the entered day " + date + "!" + Style.RESET_ALL + "\n" )
 
 if __name__ == '__main__':
+	reports_folder_path = os.path.join(os.path.expanduser("~"), "Desktop/", "next_level_reports")
+	if not os.path.exists(reports_folder_path):
+    		os.makedirs(reports_folder_path)
 	user = db.get_user_info()
+	today = datetime.datetime.now()
 	if user != None:
 		welcome_text = '''
 (\__/)
@@ -243,15 +308,32 @@ WELCOME INTO YOUR NEXT LEVEL!
 	else:
 		user = set_up()
 
-
 	day = db.get_day(datetime.datetime.today().strftime('%Y-%m-%d'))
 	if day == None:
 		print(Back.BLUE + Fore.YELLOW + Style.BRIGHT + "\nToday's Data, %s" % datetime.date.today() + Style.RESET_ALL)
-		day = read_day_input(datetime.datetime.now())
+		day = read_day_input(today)
 		day.id = db.insert_day(day)
 
 	else:
 		print(Fore.CYAN +"AMAZING! You've filled out today's data ᕙ(`▽´)ᕗ" + Style.RESET_ALL)
+
+	if(calendar.monthrange(today.year, today.month)[1]
+		== datetime.datetime.now().day):
+			hasSent = 0
+			print(Fore.WHITE + Back.RED + "\nToday is the last day for this month!" + Style.RESET_ALL  )
+			days = db.get_month_days(today.month,today.year)
+			date = "%d-%02d" % (today.year, today.month)
+			if len(days) == 0:
+				print(Fore.WHITE + Back.RED + "\nBut there is no stored data for " + date + "!" + Style.RESET_ALL + "\n" )
+			else:
+				path = reports_folder_path + "/" +  date + ".pdf"
+				title = "%s - %d Performance Report for %s" % (calendar.month_abbr[today.month],today.year,user.name)
+				generate_pdf(path,title,days)
+				print("\n" + Back.BLUE + Fore.WHITE + " This month report has been generated! Check out your desktop (•̀ᴗ•́)   " + Style.RESET_ALL )
+				if(user.receive_email == 1):
+					hasSent = send_email(path,date,user)
+					print("\n" + Back.BLUE + Fore.WHITE + " This month report has been sent tou your mail! Check out your email (•̀ᴗ•́)   " + Style.RESET_ALL )
+			db.insert_report(user,today.year,today.month,hasSent)
 
 	print(Fore.BLUE + Style.BRIGHT + "-----------------------------\n" + Style.RESET_ALL)
 	utilities_var = 1

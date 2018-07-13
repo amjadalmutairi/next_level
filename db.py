@@ -27,8 +27,11 @@ def create_db():
 def insert_new_user(user):
 	db_connection = get_db_connection()
 	cursor = db_connection.cursor()
-	q = ''' INSERT INTO user (name,email,password) VALUES (?,?,?);'''
-	cursor.execute(q,(user.name,user.email,base64.b64encode(user.password.encode('ascii'))))
+	q = ''' INSERT INTO user (name,email,password,receive_email) VALUES (?,?,?,?);'''
+	if(user.receive_email == 1):
+		cursor.execute(q,(user.name,user.email,base64.b64encode(user.password.encode('ascii')),user.receive_email))
+	else:
+		cursor.execute(q,(user.name,user.email,user.password,user.receive_email))
 	db_connection.commit()
 	db_connection.close()
 	return cursor.lastrowid
@@ -40,7 +43,10 @@ def get_user_info():
 		q = ''' SELECT * FROM user'''
 		user = cursor.execute(q).fetchone()
 		if user != None:
-			user = User(user[1],user[2],base64.b64decode(user[3]),user[0])
+			if user[3] != None:
+				user = User(user[1],user[2],base64.b64decode(user[3]),user[4],user[0])
+			else:
+				user = User(user[1],None,None,user[4],user[0])
 			db_connection.close()
 			return user
 		else:
@@ -63,8 +69,11 @@ def insert_day(day):
 def update_user(user):
 	db_connection = get_db_connection()
 	cursor = db_connection.cursor()
-	q = "UPDATE user SET name=? , email=?, password=? WHERE id=?"
-	cursor.execute(q,(user.name,user.email,base64.b64encode(user.password.encode('ascii')),user.id))
+	q = "UPDATE user SET name=? , email=?, password=?, receive_email=? WHERE id=?"
+	if user.email != None:
+		cursor.execute(q,(user.name,user.email,base64.b64encode(user.password.encode('ascii')),user.receive_email,user.id))
+	else:
+		cursor.execute(q,(user.name,None,None,user.receive_email,user.id))
 	db_connection.commit()
 	db_connection.close()
 
@@ -121,7 +130,7 @@ def get_all_days():
 def insert_report(user,y,m,hasSent):
 	db_connection = get_db_connection()
 	cursor = db_connection.cursor()
-	q = ''' INSERT INTO report (user_id,month,year,hasSent,email) VALUES (?,?,?,?,?);'''
+	q = ''' INSERT INTO report (user_id,month,year,has_sent,email) VALUES (?,?,?,?,?);'''
 	cursor.execute(q,(user.id,m,y,hasSent,user.email))
 	db_connection.commit()
 	db_connection.close()
