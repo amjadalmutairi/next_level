@@ -20,7 +20,7 @@ Then, the script will generate a monthly report for your performance at the end 
 > $ Python app.py
 4. Fill the information.
 
-So, at the end of each day you should run the app.py script and enter your numbers.
+And, at the end of each day you should run the app.py script and enter your numbers.
 
 ### Terminal Screenshot for the 1st run
 ![Screenshot](1st.png)
