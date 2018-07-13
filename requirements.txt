@@ -1,6 +1,5 @@
 validate_email
 sqlite3
 colorama
-apscheduler
 reportlab
 smtplib
