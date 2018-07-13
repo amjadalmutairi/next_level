@@ -10,7 +10,7 @@ You daily run the script and enter your numbers for the day:
 5. Rate your overall performance in this day.
 6. Write some notes.
 
-Then, the script will send you a monthly report for your performance at the end of each month.
+Then, the script will generate a monthly report for your performance at the end of each month in a folder named "next_level_reports" in your desktop. Also, it will send it to your email if you choose this option.
 
 ### How to Use It?
 1. Clon the repo.
@@ -19,16 +19,17 @@ Then, the script will send you a monthly report for your performance at the end 
 3. Run the app.py
 > $ Python app.py
 4. Fill the information.
-5. Run schedule.py
-> $ Python schedule.py
 
-Then, at the end of each day you should run the app.py script and enter your numbers.
+So, at the end of each day you should run the app.py script and enter your numbers.
 
 ### Terminal Screenshot for the 1st run
 ![Screenshot](1st.png)
 
 ### Terminal Screenshot for the further run
 ![Screenshot](2nd.png)
+
+### Sample of monthely report
+[2018-07.pdf](2018-07.pdf)
 
 ### Important Notes
 - Your email address should be **gmail**.
