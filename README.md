@@ -29,7 +29,7 @@ So, at the end of each day you should run the app.py script and enter your numbe
 ![Screenshot](2nd.png)
 
 ### Sample of monthely report
-[2018-07.pdf](2018-07.pdf)
+[sample report](2018-07.pdf)
 
 ### Important Notes
 - Your email address should be **gmail**.
