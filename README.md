@@ -28,7 +28,7 @@ So, at the end of each day you should run the app.py script and enter your numbe
 ### Terminal Screenshot for the further run
 ![Screenshot](2nd.png)
 
-### Sample of monthely report
+### Sample of monthly report
 [sample report](2018-07.pdf)
 
 ### Important Notes
