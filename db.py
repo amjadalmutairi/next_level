@@ -104,7 +104,7 @@ def get_day(date):
 def get_month_days(month,year):
 	db_connection = get_db_connection()
 	cursor = db_connection.cursor()
-	q = '''SELECT * FROM day WHERE date BETWEEN \'%d-%02d-01\'  AND \'%d-%02d-31\''''%(year,month,year,month)
+	q = '''SELECT * FROM day WHERE date BETWEEN \'%d-%02d-00\'  AND \'%d-%02d-32\''''%(year,month,year,month)
 	cursor.execute(q)
 	days = cursor.fetchall()
 	days_list = []
